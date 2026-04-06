@@ -1,10 +1,17 @@
 import os
 import tempfile
-from groq import Groq
 
-client = Groq(api_key=os.environ.get("GROQ_API_KEY", ""))
+_client = None
+
+def _get_client():
+    global _client
+    if _client is None:
+        from groq import Groq
+        _client = Groq(api_key=os.environ.get("GROQ_API_KEY", ""))
+    return _client
 
 def transcribe_audio(filepath: str, language: str = None) -> dict:
+    client = _get_client()
     with open(filepath, "rb") as f:
         result = client.audio.transcriptions.create(
             file=(os.path.basename(filepath), f),

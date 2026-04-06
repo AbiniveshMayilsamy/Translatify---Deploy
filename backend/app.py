@@ -4,6 +4,8 @@ import uuid
 import threading
 import bcrypt
 from functools import wraps
+from dotenv import load_dotenv
+load_dotenv()
 from flask import Flask, request, jsonify, send_from_directory
 from flask_socketio import SocketIO, emit
 from flask_cors import CORS
