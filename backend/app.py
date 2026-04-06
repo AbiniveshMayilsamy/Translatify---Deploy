@@ -4,8 +4,6 @@ import uuid
 import threading
 import bcrypt
 from functools import wraps
-from dotenv import load_dotenv
-load_dotenv()
 from flask import Flask, request, jsonify, send_from_directory
 from flask_socketio import SocketIO, emit
 from flask_cors import CORS
@@ -116,13 +114,13 @@ def _get_stats_safe():
     return {"total_users": 2, "total_translations": 0, "admin_count": 1, "user_count": 1}
 
 # ── Flask app ─────────────────────────────────────────────────────────────────
-app = Flask(__name__)
-app.config["SECRET_KEY"]              = os.environ.get("SECRET_KEY", "translatify-secret-2024")
-app.config["JWT_SECRET_KEY"]          = os.environ.get("JWT_SECRET_KEY", "translatify-jwt-secret-2024")
+app = Flask(__name__, static_folder=FRONTEND_DIR, static_url_path="")
+app.config["SECRET_KEY"]              = "translatify-secret-2024"
+app.config["JWT_SECRET_KEY"]          = "translatify-jwt-secret-2024"
 app.config["JWT_ACCESS_TOKEN_EXPIRES"] = False
 app.config["MAX_CONTENT_LENGTH"]      = 500 * 1024 * 1024
 
-CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=False)
+CORS(app)
 jwt_manager = JWTManager(app)
 socketio = SocketIO(app, cors_allowed_origins="*", async_mode="threading",
                     max_http_buffer_size=100 * 1024 * 1024,
@@ -421,10 +419,8 @@ def api_translate_video():
         tran       = translate(orig, det, tgt_lang)
         tts        = synthesize(tran, tgt_lang, OUTPUT_DIR)
         segs_out   = [
-            {"start": round(s.get("start", 0) if isinstance(s, dict) else s.start, 2),
-             "end": round(s.get("end", 0) if isinstance(s, dict) else s.end, 2),
-             "original": (s.get("text", "") if isinstance(s, dict) else s.text).strip(),
-             "translated": translate((s.get("text", "") if isinstance(s, dict) else s.text).strip(), det, tgt_lang)}
+            {"start": round(s["start"], 2), "end": round(s["end"], 2),
+             "original": s["text"].strip(), "translated": translate(s["text"].strip(), det, tgt_lang)}
             for s in segments
         ]
         _save_hist(get_jwt_identity(), get_jwt().get("email", ""), {
