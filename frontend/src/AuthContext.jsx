@@ -39,7 +39,7 @@ export function AuthProvider({ children }) {
   const register = useCallback(async (name, email, password) => {
     let res
     try {
-      res = await fetch('/api/auth/register', {
+      res = await fetch(`${API}/api/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, email, password }),

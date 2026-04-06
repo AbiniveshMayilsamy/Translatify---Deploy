@@ -1,7 +1,9 @@
 import { io } from 'socket.io-client'
 
-const socket = io('http://localhost:5000', {
-  transports: ['polling', 'websocket'],
+const BACKEND = import.meta.env.VITE_API_URL || 'http://localhost:5000'
+
+const socket = io(BACKEND, {
+  transports: ['websocket'],
   autoConnect: true,
   reconnection: true,
   reconnectionAttempts: 5,
