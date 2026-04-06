@@ -116,9 +116,9 @@ def _get_stats_safe():
     return {"total_users": 2, "total_translations": 0, "admin_count": 1, "user_count": 1}
 
 # ── Flask app ─────────────────────────────────────────────────────────────────
-app = Flask(__name__, static_folder=FRONTEND_DIR, static_url_path="")
-app.config["SECRET_KEY"]              = "translatify-secret-2024"
-app.config["JWT_SECRET_KEY"]          = "translatify-jwt-secret-2024"
+app = Flask(__name__)
+app.config["SECRET_KEY"]              = os.environ.get("SECRET_KEY", "translatify-secret-2024")
+app.config["JWT_SECRET_KEY"]          = os.environ.get("JWT_SECRET_KEY", "translatify-jwt-secret-2024")
 app.config["JWT_ACCESS_TOKEN_EXPIRES"] = False
 app.config["MAX_CONTENT_LENGTH"]      = 500 * 1024 * 1024
 
