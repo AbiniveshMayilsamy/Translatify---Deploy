@@ -67,8 +67,10 @@ function AppInner() {
     <ToastProvider>
       {/* Video background */}
       <div style={{ position: 'fixed', inset: 0, zIndex: 0, overflow: 'hidden' }}>
-        <video autoPlay loop muted playsInline src={videoBg}
-          style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+        {typeof window !== 'undefined' && (
+          <video autoPlay loop muted playsInline src={videoBg}
+            style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+        )}
         <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.85)' }} />
       </div>
 

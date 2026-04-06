@@ -419,8 +419,10 @@ def api_translate_video():
         tran       = translate(orig, det, tgt_lang)
         tts        = synthesize(tran, tgt_lang, OUTPUT_DIR)
         segs_out   = [
-            {"start": round(s["start"], 2), "end": round(s["end"], 2),
-             "original": s["text"].strip(), "translated": translate(s["text"].strip(), det, tgt_lang)}
+            {"start": round(s.get("start", 0) if isinstance(s, dict) else s.start, 2),
+             "end": round(s.get("end", 0) if isinstance(s, dict) else s.end, 2),
+             "original": (s.get("text", "") if isinstance(s, dict) else s.text).strip(),
+             "translated": translate((s.get("text", "") if isinstance(s, dict) else s.text).strip(), det, tgt_lang)}
             for s in segments
         ]
         _save_hist(get_jwt_identity(), get_jwt().get("email", ""), {

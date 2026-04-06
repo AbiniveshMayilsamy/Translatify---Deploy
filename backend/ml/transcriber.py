@@ -12,9 +12,14 @@ def transcribe_audio(filepath: str, language: str = None) -> dict:
             language=language,
             response_format="verbose_json",
         )
+    segs = result.segments or []
     segments = [
-        {"start": s.start, "end": s.end, "text": s.text}
-        for s in (result.segments or [])
+        {
+            "start": s["start"] if isinstance(s, dict) else s.start,
+            "end": s["end"] if isinstance(s, dict) else s.end,
+            "text": s["text"] if isinstance(s, dict) else s.text,
+        }
+        for s in segs
     ]
     return {
         "text": result.text,
