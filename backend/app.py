@@ -12,6 +12,9 @@ from flask_jwt_extended import (
     jwt_required, get_jwt_identity, get_jwt
 )
 
+# Increase recursion limit for startup
+sys.setrecursionlimit(5000)
+
 # ffmpeg is expected to be in PATH on the server (installed via apt/yum on AWS)
 if os.name == "nt":
     _win_ffmpeg = r"C:\Users\Admin\AppData\Local\Microsoft\WinGet\Packages\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\ffmpeg-8.0.1-full_build\bin"
@@ -27,10 +30,64 @@ os.makedirs(UPLOAD_DIR, exist_ok=True)
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 sys.path.insert(0, BASE_DIR)
-from ml.transcriber import transcribe_audio, transcribe_bytes
-from ml.translator import translate, SUPPORTED_LANGUAGES
-from ml.tts import synthesize
-from ml.video import extract_audio, get_video_duration
+
+# Lazy load ML modules to avoid startup recursion
+_transcriber = None
+_translator = None
+_tts = None
+_video = None
+
+def get_transcriber():
+    global _transcriber
+    if _transcriber is None:
+        try:
+            from ml.transcriber import transcribe_audio, transcribe_bytes
+            _transcriber = (transcribe_audio, transcribe_bytes)
+        except RecursionError:
+            print("[WARNING] Recursion during transcriber import")
+            raise
+    return _transcriber
+
+def get_translator():
+    global _translator
+    if _translator is None:
+        try:
+            from ml.translator import translate, SUPPORTED_LANGUAGES
+            _translator = (translate, SUPPORTED_LANGUAGES)
+        except RecursionError:
+            print("[WARNING] Recursion during translator import")
+            raise
+    return _translator
+
+def get_tts():
+    global _tts
+    if _tts is None:
+        try:
+            from ml.tts import synthesize
+            _tts = synthesize
+        except RecursionError:
+            print("[WARNING] Recursion during TTS import")
+            raise
+    return _tts
+
+def get_video():
+    global _video
+    if _video is None:
+        try:
+            from ml.video import extract_audio, get_video_duration
+            _video = (extract_audio, get_video_duration)
+        except RecursionError:
+            print("[WARNING] Recursion during video import")
+            raise
+    return _video
+
+# Cache for SUPPORTED_LANGUAGES
+_SUPPORTED_LANGUAGES = None
+def get_supported_languages():
+    global _SUPPORTED_LANGUAGES
+    if _SUPPORTED_LANGUAGES is None:
+        _, _SUPPORTED_LANGUAGES = get_translator()
+    return _SUPPORTED_LANGUAGES
 
 # ── Dummy accounts (always work, even without MongoDB) ────────────────────────
 _DUMMY_USERS = {
@@ -122,11 +179,22 @@ app.config["JWT_SECRET_KEY"]          = "translatify-jwt-secret-2024"
 app.config["JWT_ACCESS_TOKEN_EXPIRES"] = False
 app.config["MAX_CONTENT_LENGTH"]      = 500 * 1024 * 1024
 
-CORS(app, origins=["*"], supports_credentials=True)
+CORS(app, 
+     origins=["https://translatify-deploy.vercel.app", "http://localhost:5173", "http://localhost:3000"],
+     supports_credentials=True)
 jwt_manager = JWTManager(app)
-socketio = SocketIO(app, cors_allowed_origins="*", async_mode="threading",
-                    max_http_buffer_size=100 * 1024 * 1024,
-                    ping_timeout=60, ping_interval=25)
+
+try:
+    socketio = SocketIO(app, 
+                        cors_allowed_origins=["https://translatify-deploy.vercel.app", "http://localhost:5173", "http://localhost:3000"],
+                        async_mode="threading",
+                        max_http_buffer_size=100 * 1024 * 1024,
+                        ping_timeout=60, ping_interval=25,
+                        engineio_logger=False,
+                        logger=False)
+except Exception as e:
+    print(f"[WARNING] SocketIO init warning: {e}")
+    socketio = SocketIO(app, cors_allowed_origins="*")
 
 @app.errorhandler(413)
 def too_large(e):
@@ -135,10 +203,17 @@ def too_large(e):
 @app.errorhandler(Exception)
 def handle_exception(e):
     from werkzeug.exceptions import HTTPException
+    
+    # Avoid recursion in error handling
+    if isinstance(e, RecursionError):
+        print(f"[ERROR] RecursionError detected")
+        return jsonify({"error": "Recursion limit exceeded"}), 500
+    
     if isinstance(e, HTTPException):
         return jsonify({"error": e.description}), e.code
-    print(f"[ERROR] Unhandled: {e}")
-    return jsonify({"error": str(e)}), 500
+    
+    print(f"[ERROR] Unhandled: {type(e).__name__}")
+    return jsonify({"error": "Internal server error"}), 500
 
 ALLOWED_AUDIO = {"wav", "mp3", "webm", "ogg", "m4a", "flac"}
 ALLOWED_VIDEO = {"mp4", "avi", "mov", "mkv", "webm"}
@@ -308,7 +383,7 @@ def user_history():
 # ── Languages ─────────────────────────────────────────────────────────────────
 @app.route("/api/languages", methods=["GET"])
 def get_languages():
-    return jsonify(SUPPORTED_LANGUAGES)
+    return jsonify(get_supported_languages())
 
 
 # ── Transcribe ────────────────────────────────────────────────────────────────
@@ -325,6 +400,7 @@ def api_transcribe():
     filepath = os.path.join(UPLOAD_DIR, filename)
     file.save(filepath)
     try:
+        transcribe_audio, _ = get_transcriber()
         return jsonify(transcribe_audio(filepath, src_lang if src_lang != "auto" else None))
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -343,6 +419,7 @@ def api_translate():
     tgt_lang = data.get("tgt_lang", "fr")
     if not text:
         return jsonify({"error": "No text provided"}), 400
+    translate, _ = get_translator()
     return jsonify({"translated": translate(text, src_lang, tgt_lang)})
 
 
@@ -356,6 +433,7 @@ def api_tts():
     if not text:
         return jsonify({"error": "No text provided"}), 400
     try:
+        synthesize = get_tts()
         filename = synthesize(text, lang, OUTPUT_DIR)
         return jsonify({"audio_url": f"/outputs/{filename}"})
     except Exception as e:
@@ -375,6 +453,9 @@ def api_translate_audio():
     filepath = os.path.join(UPLOAD_DIR, filename)
     file.save(filepath)
     try:
+        transcribe_audio, _ = get_transcriber()
+        translate, _ = get_translator()
+        synthesize = get_tts()
         tr   = transcribe_audio(filepath, src_lang if src_lang != "auto" else None)
         orig = tr["text"]
         det  = tr["language"]
@@ -416,6 +497,10 @@ def api_translate_video():
     audio_path = None
     file.save(filepath)
     try:
+        extract_audio, _ = get_video()
+        transcribe_audio, _ = get_transcriber()
+        translate, _ = get_translator()
+        synthesize = get_tts()
         audio_path = extract_audio(filepath, UPLOAD_DIR)
         tr         = transcribe_audio(audio_path, src_lang if src_lang != "auto" else None)
         orig       = tr["text"]
@@ -495,17 +580,20 @@ def on_stream_audio(data):
         def send(event, payload):
             socketio.emit(event, payload, to=sid)
         try:
+            _, transcribe_bytes_fn = get_transcriber()
+            translate_fn, _ = get_translator()
+            synthesize_fn = get_tts()
             send("status", {"message": "Transcribing..."})
-            tr         = transcribe_bytes(raw, src_lang if src_lang != "auto" else None)
+            tr         = transcribe_bytes_fn(raw, src_lang if src_lang != "auto" else None)
             original   = tr["text"]
             detected   = tr["language"]
             print(f"[Socket] transcribed: {original[:80]}")
             send("transcription", {"text": original, "language": detected})
             send("status", {"message": "Translating..."})
-            translated = translate(original, detected, tgt_lang)
+            translated = translate_fn(original, detected, tgt_lang)
             send("translation", {"text": translated, "src": detected, "tgt": tgt_lang})
             send("status", {"message": "Generating speech..."})
-            tts_file   = synthesize(translated, tgt_lang, OUTPUT_DIR)
+            tts_file   = synthesize_fn(translated, tgt_lang, OUTPUT_DIR)
             send("tts_ready", {"audio_url": f"/outputs/{tts_file}"})
             send("status", {"message": "Done"})
             if user_id:
