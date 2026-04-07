@@ -6,6 +6,9 @@ __pycache__/
 venv/
 .venv/
 
+# Do NOT ignore .ebextensions
+!backend/.ebextensions/
+
 # Backend generated files
 backend/uploads/*
 backend/outputs/*
