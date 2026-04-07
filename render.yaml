@@ -3,7 +3,7 @@ services:
     name: translatify-backend
     runtime: python
     rootDir: backend
-    buildCommand: pip install -r requirements.txt
+    buildCommand: chmod +x build.sh && ./build.sh
     startCommand: gunicorn -w 1 -k eventlet --bind 0.0.0.0:$PORT app:app
     envVars:
       - key: WHISPER_MODEL
