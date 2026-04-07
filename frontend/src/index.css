@@ -377,4 +377,16 @@ audio { width: 100%; border-radius: 8px; accent-color: var(--green); }
   .toast-wrap { bottom: 12px; right: 12px; left: 12px; }
   .toast { max-width: 100%; }
   .segment-item { grid-template-columns: 60px 1fr; }
+
+  /* translate panel */
+  main { padding: 24px 16px 80px !important; }
+
+  /* admin panel */
+  div[style*="padding: '48px 48px'"] { padding: 20px 16px 80px !important; }
+
+  /* lang row selects */
+  select { font-size: 0.85rem !important; }
+
+  /* result panel */
+  audio { width: 100% !important; }
 }

@@ -48,8 +48,7 @@ export default function Header({ connected, status, page, onNav }) {
         </motion.div>
 
         {/* Desktop Nav */}
-        <nav style={{ display: 'flex', alignItems: 'center', gap: 2, flex: 1, marginLeft: 24 }}
-          className="desktop-nav">
+        <nav className="desktop-nav" style={{ alignItems: 'center', gap: 2, flex: 1, marginLeft: 24 }}>
           {navItems.map(n => {
             const isActive = page === n.id
             return (
@@ -74,7 +73,7 @@ export default function Header({ connected, status, page, onNav }) {
         </nav>
 
         {/* Right side desktop */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }} className="desktop-nav">
+        <div className="desktop-nav" style={{ alignItems: 'center', gap: 12 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             <motion.div style={{ width: 7, height: 7, borderRadius: '50%', background: connected ? G : '#333' }}
               animate={connected ? { boxShadow: ['0 0 0 0 rgba(181,242,61,0.6)', '0 0 0 6px rgba(181,242,61,0)', '0 0 0 0 rgba(181,242,61,0)'] } : {}}
@@ -104,7 +103,7 @@ export default function Header({ connected, status, page, onNav }) {
         </div>
 
         {/* Mobile right: status dot + hamburger */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }} className="mobile-nav">
+        <div className="mobile-nav" style={{ alignItems: 'center', gap: 12 }}>
           <motion.div style={{ width: 7, height: 7, borderRadius: '50%', background: connected ? G : '#333' }}
             animate={connected ? { boxShadow: ['0 0 0 0 rgba(181,242,61,0.6)', '0 0 0 6px rgba(181,242,61,0)', '0 0 0 0 rgba(181,242,61,0)'] } : {}}
             transition={{ duration: 1.8, repeat: Infinity }} />
