@@ -8,39 +8,70 @@ if os.name == "nt":
     if os.path.exists(_win_ffmpeg):
         os.environ["PATH"] = _win_ffmpeg + os.pathsep + os.environ.get("PATH", "")
 
-# Force model cache to a writable directory on Render
-os.environ.setdefault("HF_HOME", "/opt/render/project/src/.cache/huggingface")
-os.environ.setdefault("XDG_CACHE_HOME", "/opt/render/project/src/.cache")
+GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "")
+MODEL_SIZE   = os.environ.get("WHISPER_MODEL", "base")
 
-_model = None
-MODEL_SIZE = os.environ.get("WHISPER_MODEL", "base")
+# ── Groq cloud transcription (free, no model download) ────────────────────────
+def _transcribe_groq(audio_path: str, language: str = None) -> dict:
+    import requests
+    with open(audio_path, "rb") as f:
+        data = {"model": "whisper-large-v3", "response_format": "verbose_json"}
+        if language and language != "auto":
+            data["language"] = language
+        r = requests.post(
+            "https://api.groq.com/openai/v1/audio/transcriptions",
+            headers={"Authorization": f"Bearer {GROQ_API_KEY}"},
+            files={"file": f},
+            data=data,
+            timeout=60,
+        )
+    r.raise_for_status()
+    result = r.json()
+    return {
+        "text": result.get("text", "").strip(),
+        "language": result.get("language", language or "en"),
+        "segments": [
+            {"start": round(s["start"], 2), "end": round(s["end"], 2), "text": s["text"].strip()}
+            for s in result.get("segments", [])
+        ]
+    }
 
-def get_model():
-    global _model
-    if _model is None:
+# ── Local faster-whisper fallback (for local dev) ─────────────────────────────
+_local_model = None
+
+def _get_local_model():
+    global _local_model
+    if _local_model is None:
         from faster_whisper import WhisperModel
-        print(f"[Whisper] Loading {MODEL_SIZE} model...")
-        _model = WhisperModel(MODEL_SIZE, device="cpu", compute_type="int8")
+        print(f"[Whisper] Loading {MODEL_SIZE} model locally...")
+        _local_model = WhisperModel(MODEL_SIZE, device="cpu", compute_type="int8")
         print("[Whisper] Loaded")
-    return _model
+    return _local_model
 
-def transcribe_audio(audio_path: str, language: str = None) -> dict:
-    model = get_model()
+def _transcribe_local(audio_path: str, language: str = None) -> dict:
+    model = _get_local_model()
     segments, info = model.transcribe(
         audio_path,
         language=language if language and language != "auto" else None,
         beam_size=5,
     )
     segs = list(segments)
-    text = " ".join(s.text.strip() for s in segs)
     return {
-        "text": text.strip(),
+        "text": " ".join(s.text.strip() for s in segs).strip(),
         "language": info.language,
         "segments": [
             {"start": round(s.start, 2), "end": round(s.end, 2), "text": s.text.strip()}
             for s in segs
         ]
     }
+
+# ── Public API ────────────────────────────────────────────────────────────────
+def transcribe_audio(audio_path: str, language: str = None) -> dict:
+    if GROQ_API_KEY:
+        print("[Transcriber] Using Groq API")
+        return _transcribe_groq(audio_path, language)
+    print("[Transcriber] Using local faster-whisper")
+    return _transcribe_local(audio_path, language)
 
 def transcribe_bytes(audio_bytes: bytes, language: str = None) -> dict:
     raw = audio_bytes if isinstance(audio_bytes, bytes) else bytes(audio_bytes)
