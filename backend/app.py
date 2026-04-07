@@ -197,7 +197,7 @@ app.config["MAX_CONTENT_LENGTH"]      = 500 * 1024 * 1024
 app.config["SEND_FILE_MAX_AGE_DEFAULT"] = 300
 app.config["JSON_SORT_KEYS"] = False
 
-# CORS - Use wildcard for now since specific origins not working on Render
+# CORS - Use manual headers to avoid conflicts
 @app.before_request
 def handle_preflight():
     if request.method == "OPTIONS":
@@ -214,9 +214,6 @@ def after_request(response):
     response.headers.add("Access-Control-Allow-Methods", "GET,PUT,POST,DELETE,OPTIONS")
     response.headers.add("Access-Control-Expose-Headers", "Content-Type,Authorization")
     return response
-
-# Also initialize flask-cors for extra safety
-CORS(app, resources={r"/*": {"origins": "*"}})
 
 jwt_manager = JWTManager(app)
 
