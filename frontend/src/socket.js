@@ -12,7 +12,7 @@ const socket = io(SOCKET_URL, {
   reconnectionDelay: 1000,
   reconnectionDelayMax: 5000,
   reconnectionAttempts: Infinity,
-  timeout: 20000,
+  timeout: 60000,
   secure: true,
   rejectUnauthorized: false,
 });
