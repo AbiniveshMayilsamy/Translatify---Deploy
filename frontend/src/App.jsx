@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import socket from './socket'
+import BASE from './api'
 import Header from './components/Header'
 import TabBar from './components/TabBar'
 import HomePage from './components/HomePage'
@@ -40,7 +41,7 @@ function AppInner() {
   }, [])
 
   useEffect(() => {
-    fetch('/api/languages').then(r => r.json()).then(setLangs).catch(() => {})
+    fetch(`${BASE}/api/languages`).then(r => r.json()).then(setLangs).catch(() => {})
   }, [])
 
   const handleNav = (id) => {

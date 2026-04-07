@@ -5,6 +5,7 @@ import DropZone from './DropZone'
 import ResultPanel from './ResultPanel'
 import { useToast } from '../ToastContext'
 import { useAuth } from '../AuthContext'
+import BASE from '../api'
 
 const G = '#b5f23d'
 
@@ -31,7 +32,7 @@ export default function AudioUpload({ langs }) {
     const fd = new FormData()
     fd.append('file', file); fd.append('src_lang', srcLang); fd.append('tgt_lang', tgtLang)
     try {
-      const res = await fetch('/api/translate-audio', { method: 'POST', body: fd, headers: { Authorization: `Bearer ${token}` } })
+      const res = await fetch(`${BASE}/api/translate-audio`, { method: 'POST', body: fd, headers: { Authorization: `Bearer ${token}` } })
       const data = await res.json()
       clearInterval(progRef.current); setProgress(100)
       if (data.error) { setError(data.error); toast(data.error, 'error'); return }

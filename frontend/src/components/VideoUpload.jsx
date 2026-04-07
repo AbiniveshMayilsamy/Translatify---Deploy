@@ -6,6 +6,7 @@ import ResultPanel from './ResultPanel'
 import SegmentList from './SegmentList'
 import { useToast } from '../ToastContext'
 import { useAuth } from '../AuthContext'
+import BASE from '../api'
 
 const G = '#b5f23d'
 
@@ -34,7 +35,7 @@ export default function VideoUpload({ langs }) {
     const fd = new FormData()
     fd.append('file', file); fd.append('src_lang', srcLang); fd.append('tgt_lang', tgtLang)
     try {
-      const res = await fetch('/api/translate-video', { method: 'POST', body: fd, headers: { Authorization: `Bearer ${token}` } })
+      const res = await fetch(`${BASE}/api/translate-video`, { method: 'POST', body: fd, headers: { Authorization: `Bearer ${token}` } })
       clearInterval(progRef.current); setProgress(100)
       const ct = res.headers.get('content-type') || ''
       if (!ct.includes('application/json')) {

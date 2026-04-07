@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useCallback } from 'react'
+import BASE from './api'
 
 const AuthContext = createContext(null)
 
@@ -19,7 +20,7 @@ export function AuthProvider({ children }) {
   const login = useCallback(async (email, password) => {
     let res
     try {
-      res = await fetch('/api/auth/login', {
+      res = await fetch(`${BASE}/api/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
@@ -39,7 +40,7 @@ export function AuthProvider({ children }) {
   const register = useCallback(async (name, email, password) => {
     let res
     try {
-      res = await fetch('/api/auth/register', {
+      res = await fetch(`${BASE}/api/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, email, password }),
