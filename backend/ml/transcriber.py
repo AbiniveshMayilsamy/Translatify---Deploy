@@ -8,6 +8,10 @@ if os.name == "nt":
     if os.path.exists(_win_ffmpeg):
         os.environ["PATH"] = _win_ffmpeg + os.pathsep + os.environ.get("PATH", "")
 
+# Force model cache to a writable directory on Render
+os.environ.setdefault("HF_HOME", "/opt/render/project/src/.cache/huggingface")
+os.environ.setdefault("XDG_CACHE_HOME", "/opt/render/project/src/.cache")
+
 _model = None
 MODEL_SIZE = os.environ.get("WHISPER_MODEL", "base")
 
