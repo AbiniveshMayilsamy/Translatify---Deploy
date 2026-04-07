@@ -26,6 +26,7 @@ backend/outputs/*
 node_modules/
 frontend/dist/
 frontend/.env
+!frontend/.env.production
 
 # OS
 .DS_Store
