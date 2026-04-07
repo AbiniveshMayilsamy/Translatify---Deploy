@@ -134,7 +134,10 @@ def too_large(e):
 
 @app.errorhandler(Exception)
 def handle_exception(e):
-    import traceback; traceback.print_exc()
+    from werkzeug.exceptions import HTTPException
+    if isinstance(e, HTTPException):
+        return jsonify({"error": e.description}), e.code
+    print(f"[ERROR] Unhandled: {e}")
     return jsonify({"error": str(e)}), 500
 
 ALLOWED_AUDIO = {"wav", "mp3", "webm", "ogg", "m4a", "flac"}
