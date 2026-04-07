@@ -3,16 +3,8 @@
   "buildCommand": "npm run build",
   "installCommand": "npm install",
   "rewrites": [
+    { "source": "/api/(.*)", "destination": "https://translatify-deploy.onrender.com/api/$1" },
+    { "source": "/outputs/(.*)", "destination": "https://translatify-deploy.onrender.com/outputs/$1" },
     { "source": "/(.*)", "destination": "/index.html" }
-  ],
-  "headers": [
-    {
-      "source": "/(.*).js",
-      "headers": [{ "key": "Content-Type", "value": "application/javascript" }]
-    },
-    {
-      "source": "/(.*).mjs",
-      "headers": [{ "key": "Content-Type", "value": "application/javascript" }]
-    }
   ]
 }
