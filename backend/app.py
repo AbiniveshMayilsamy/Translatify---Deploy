@@ -195,27 +195,32 @@ app.config["JWT_SECRET_KEY"]          = "translatify-jwt-secret-2024"
 app.config["JWT_ACCESS_TOKEN_EXPIRES"] = False
 app.config["MAX_CONTENT_LENGTH"]      = 500 * 1024 * 1024
 
-# Flexible CORS - allow Vercel app and any localhost
-allowed_origins = [
-    "https://translatify-deploy.vercel.app",
-    "http://localhost:5173",
-    "http://localhost:3000",
-    "http://127.0.0.1:5173",
-    "http://127.0.0.1:3000",
-]
+# CORS - Use wildcard for now since specific origins not working on Render
+@app.before_request
+def handle_preflight():
+    if request.method == "OPTIONS":
+        response = app.make_default_options_response()
+        response.headers.add("Access-Control-Allow-Origin", "*")
+        response.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+        response.headers.add("Access-Control-Allow-Methods", "GET,PUT,POST,DELETE,OPTIONS")
+        return response
 
-CORS(app, 
-     origins=allowed_origins,
-     supports_credentials=True,
-     allow_headers=["Content-Type", "Authorization"],
-     methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-     expose_headers=["Content-Type", "Authorization"])
+@app.after_request
+def after_request(response):
+    response.headers.add("Access-Control-Allow-Origin", "*")
+    response.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+    response.headers.add("Access-Control-Allow-Methods", "GET,PUT,POST,DELETE,OPTIONS")
+    response.headers.add("Access-Control-Expose-Headers", "Content-Type,Authorization")
+    return response
+
+# Also initialize flask-cors for extra safety
+CORS(app, resources={r"/*": {"origins": "*"}})
 
 jwt_manager = JWTManager(app)
 
 try:
     socketio = SocketIO(app, 
-                        cors_allowed_origins=allowed_origins,
+                        cors_allowed_origins="*",
                         async_mode="threading",
                         max_http_buffer_size=100 * 1024 * 1024,
                         ping_timeout=60, ping_interval=25,
