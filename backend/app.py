@@ -122,7 +122,7 @@ app.config["JWT_SECRET_KEY"]          = "translatify-jwt-secret-2024"
 app.config["JWT_ACCESS_TOKEN_EXPIRES"] = False
 app.config["MAX_CONTENT_LENGTH"]      = 500 * 1024 * 1024
 
-CORS(app)
+CORS(app, origins=["*"], supports_credentials=True)
 jwt_manager = JWTManager(app)
 socketio = SocketIO(app, cors_allowed_origins="*", async_mode="threading",
                     max_http_buffer_size=100 * 1024 * 1024,

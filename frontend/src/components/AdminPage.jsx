@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { motion } from 'framer-motion'
 import { useAuth } from '../AuthContext'
+import BASE from '../api'
 
 const G = '#b5f23d'
 
@@ -43,20 +44,20 @@ export default function AdminPage() {
   const headers = { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
 
   const fetchStats = useCallback(async () => {
-    const r = await fetch('/api/admin/stats', { headers })
+    const r = await fetch(`${BASE}/api/admin/stats`, { headers })
     if (r.ok) setStats(await r.json())
   }, [token])
 
   const fetchUsers = useCallback(async () => {
     setLoading(true)
-    const r = await fetch('/api/admin/users', { headers })
+    const r = await fetch(`${BASE}/api/admin/users`, { headers })
     if (r.ok) setUsers(await r.json())
     setLoading(false)
   }, [token])
 
   const fetchHistory = useCallback(async () => {
     setLoading(true)
-    const r = await fetch('/api/admin/history?limit=100', { headers })
+    const r = await fetch(`${BASE}/api/admin/history?limit=100`, { headers })
     if (r.ok) setHistory(await r.json())
     setLoading(false)
   }, [token])
@@ -68,7 +69,7 @@ export default function AdminPage() {
   }, [activeTab])
 
   const changeRole = async (email, role) => {
-    await fetch(`/api/admin/users/${encodeURIComponent(email)}/role`, {
+    await fetch(`${BASE}/api/admin/users/${encodeURIComponent(email)}/role`, {
       method: 'PUT', headers, body: JSON.stringify({ role })
     })
     setMsg(`Role updated for ${email}`)
@@ -78,7 +79,7 @@ export default function AdminPage() {
 
   const removeUser = async (email) => {
     if (!window.confirm(`Delete user ${email}?`)) return
-    await fetch(`/api/admin/users/${encodeURIComponent(email)}`, { method: 'DELETE', headers })
+    await fetch(`${BASE}/api/admin/users/${encodeURIComponent(email)}`, { method: 'DELETE', headers })
     setMsg(`Deleted ${email}`)
     fetchUsers(); fetchStats()
     setTimeout(() => setMsg(''), 3000)
