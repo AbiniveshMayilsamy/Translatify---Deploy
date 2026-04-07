@@ -368,7 +368,13 @@ audio { width: 100%; border-radius: 8px; accent-color: var(--green); }
 .feature-card:hover .accent-line { transform: scaleY(1); }
 
 /* ── Responsive ── */
+.desktop-nav { display: flex !important; }
+.mobile-nav  { display: none !important; }
+
 @media (max-width: 768px) {
+  .desktop-nav { display: none !important; }
+  .mobile-nav  { display: flex !important; }
   .toast-wrap { bottom: 12px; right: 12px; left: 12px; }
   .toast { max-width: 100%; }
+  .segment-item { grid-template-columns: 60px 1fr; }
 }

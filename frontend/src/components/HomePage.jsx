@@ -39,7 +39,7 @@ export default function HomePage({ onStart }) {
     <div style={{ minHeight: '100vh' }}>
 
       {/* Hero */}
-      <div style={{ padding: '90px 64px 72px', maxWidth: 1200 }}>
+      <div style={{ padding: 'clamp(40px, 8vw, 90px) clamp(20px, 5vw, 64px) 72px', maxWidth: 1200 }}>
 
         <Reveal delay={0}>
           <span style={{
@@ -98,7 +98,7 @@ export default function HomePage({ onStart }) {
 
       {/* Stats row */}
       <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', maxWidth: 1200, padding: '0 64px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', maxWidth: 1200, padding: '0 clamp(20px, 5vw, 64px)' }}>
           {STATS.map((s, i) => (
             <Reveal key={s.label} delay={i * 0.1} style={{
               padding: '32px 24px',
@@ -112,7 +112,7 @@ export default function HomePage({ onStart }) {
       </div>
 
       {/* Features */}
-      <div style={{ padding: '80px 64px', maxWidth: 1200 }}>
+      <div style={{ padding: 'clamp(40px, 6vw, 80px) clamp(20px, 5vw, 64px)', maxWidth: 1200 }}>
         <Reveal delay={0}>
           <div style={{ marginBottom: 48 }}>
             <div style={{ fontSize: '0.72rem', color: G, fontWeight: 700, letterSpacing: '2px', textTransform: 'uppercase', marginBottom: 12 }}>CAPABILITIES</div>
@@ -122,7 +122,7 @@ export default function HomePage({ onStart }) {
           </div>
         </Reveal>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 1, background: 'rgba(255,255,255,0.04)' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 1, background: 'rgba(255,255,255,0.04)' }}>
           {FEATURES.map((f, i) => (
             <Reveal key={f.title} delay={i * 0.08} type={i % 2 === 0 ? 'reveal' : 'reveal-scale'}>
               <div className="feature-card" style={{ background: 'rgba(0,0,0,0.45)', borderRadius: 0, padding: '36px 32px', cursor: 'default' }}>
@@ -137,7 +137,7 @@ export default function HomePage({ onStart }) {
       </div>
 
       {/* CTA */}
-      <div style={{ padding: '0 64px 100px', maxWidth: 1200 }}>
+      <div style={{ padding: '0 clamp(20px, 5vw, 64px) 100px', maxWidth: 1200 }}>
         <Reveal type="reveal-scale">
           <div style={{ background: 'rgba(0,0,0,0.55)', borderRadius: 16, padding: '56px 48px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 32, flexWrap: 'wrap', borderLeft: `3px solid ${G}` }}>
             <div>
