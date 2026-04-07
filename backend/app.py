@@ -43,8 +43,12 @@ def get_transcriber():
         try:
             from ml.transcriber import transcribe_audio, transcribe_bytes
             _transcriber = (transcribe_audio, transcribe_bytes)
-        except RecursionError:
-            print("[WARNING] Recursion during transcriber import")
+            print("[ML] Transcriber loaded successfully")
+        except RecursionError as e:
+            print(f"[ERROR] Recursion during transcriber import: {e}")
+            raise
+        except Exception as e:
+            print(f"[ERROR] Failed to load transcriber: {e}")
             raise
     return _transcriber
 
@@ -54,8 +58,12 @@ def get_translator():
         try:
             from ml.translator import translate, SUPPORTED_LANGUAGES
             _translator = (translate, SUPPORTED_LANGUAGES)
-        except RecursionError:
-            print("[WARNING] Recursion during translator import")
+            print("[ML] Translator loaded successfully")
+        except RecursionError as e:
+            print(f"[ERROR] Recursion during translator import: {e}")
+            raise
+        except Exception as e:
+            print(f"[ERROR] Failed to load translator: {e}")
             raise
     return _translator
 
@@ -65,8 +73,12 @@ def get_tts():
         try:
             from ml.tts import synthesize
             _tts = synthesize
-        except RecursionError:
-            print("[WARNING] Recursion during TTS import")
+            print("[ML] TTS loaded successfully")
+        except RecursionError as e:
+            print(f"[ERROR] Recursion during TTS import: {e}")
+            raise
+        except Exception as e:
+            print(f"[ERROR] Failed to load TTS: {e}")
             raise
     return _tts
 
@@ -76,8 +88,12 @@ def get_video():
         try:
             from ml.video import extract_audio, get_video_duration
             _video = (extract_audio, get_video_duration)
-        except RecursionError:
-            print("[WARNING] Recursion during video import")
+            print("[ML] Video module loaded successfully")
+        except RecursionError as e:
+            print(f"[ERROR] Recursion during video import: {e}")
+            raise
+        except Exception as e:
+            print(f"[ERROR] Failed to load video module: {e}")
             raise
     return _video
 
@@ -179,14 +195,27 @@ app.config["JWT_SECRET_KEY"]          = "translatify-jwt-secret-2024"
 app.config["JWT_ACCESS_TOKEN_EXPIRES"] = False
 app.config["MAX_CONTENT_LENGTH"]      = 500 * 1024 * 1024
 
+# Flexible CORS - allow Vercel app and any localhost
+allowed_origins = [
+    "https://translatify-deploy.vercel.app",
+    "http://localhost:5173",
+    "http://localhost:3000",
+    "http://127.0.0.1:5173",
+    "http://127.0.0.1:3000",
+]
+
 CORS(app, 
-     origins=["https://translatify-deploy.vercel.app", "http://localhost:5173", "http://localhost:3000"],
-     supports_credentials=True)
+     origins=allowed_origins,
+     supports_credentials=True,
+     allow_headers=["Content-Type", "Authorization"],
+     methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+     expose_headers=["Content-Type", "Authorization"])
+
 jwt_manager = JWTManager(app)
 
 try:
     socketio = SocketIO(app, 
-                        cors_allowed_origins=["https://translatify-deploy.vercel.app", "http://localhost:5173", "http://localhost:3000"],
+                        cors_allowed_origins=allowed_origins,
                         async_mode="threading",
                         max_http_buffer_size=100 * 1024 * 1024,
                         ping_timeout=60, ping_interval=25,
