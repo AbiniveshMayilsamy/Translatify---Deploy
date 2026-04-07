@@ -32,12 +32,23 @@ export default function AudioUpload({ langs }) {
     const fd = new FormData()
     fd.append('file', file); fd.append('src_lang', srcLang); fd.append('tgt_lang', tgtLang)
     try {
-      const res = await fetch(`${BASE}/api/translate-audio`, { method: 'POST', body: fd, headers: { Authorization: `Bearer ${token}` } })
+      const controller = new AbortController()
+      const timeout = setTimeout(() => controller.abort(), 180000) // 3 minute timeout
+      const res = await fetch(`${BASE}/api/translate-audio`, { 
+        method: 'POST', 
+        body: fd, 
+        headers: { Authorization: `Bearer ${token}` },
+        signal: controller.signal
+      })
+      clearTimeout(timeout)
       const data = await res.json()
       clearInterval(progRef.current); setProgress(100)
       if (data.error) { setError(data.error); toast(data.error, 'error'); return }
       setError(null); setResult(data); toast('Audio translation complete!', 'success')
-    } catch (e) { setError(e.message); toast('Error: ' + e.message, 'error') }
+    } catch (e) { 
+      const msg = e.name === 'AbortError' ? 'Request timeout - server may be busy' : e.message
+      setError(msg); toast('Error: ' + msg, 'error') 
+    }
     finally { setLoading(false); setTimeout(() => setProgress(0), 600) }
   }
 

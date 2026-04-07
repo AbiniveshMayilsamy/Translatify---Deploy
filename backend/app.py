@@ -194,6 +194,8 @@ app.config["SECRET_KEY"]              = "translatify-secret-2024"
 app.config["JWT_SECRET_KEY"]          = "translatify-jwt-secret-2024"
 app.config["JWT_ACCESS_TOKEN_EXPIRES"] = False
 app.config["MAX_CONTENT_LENGTH"]      = 500 * 1024 * 1024
+app.config["SEND_FILE_MAX_AGE_DEFAULT"] = 300
+app.config["JSON_SORT_KEYS"] = False
 
 # CORS - Use wildcard for now since specific origins not working on Render
 @app.before_request
@@ -273,6 +275,42 @@ def index():
 @app.route("/outputs/<path:filename>")
 def outputs(filename):
     return send_from_directory(OUTPUT_DIR, filename)
+
+
+# ── Health Check ──────────────────────────────────────────────────────────────
+@app.route("/api/health", methods=["GET"])
+def health():
+    """Check if backend is alive and ML models can load"""
+    try:
+        # Test lazy loading without blocking too long
+        status = {
+            "status": "ok",
+            "timestamp": str(__import__('datetime').datetime.now()),
+            "models": {}
+        }
+        
+        # Try to load each model and report status
+        try:
+            get_transcriber()
+            status["models"]["transcriber"] = "loaded"
+        except Exception as e:
+            status["models"]["transcriber"] = f"error: {str(e)[:50]}"
+        
+        try:
+            get_translator()
+            status["models"]["translator"] = "loaded"
+        except Exception as e:
+            status["models"]["translator"] = f"error: {str(e)[:50]}"
+        
+        try:
+            get_tts()
+            status["models"]["tts"] = "loaded"
+        except Exception as e:
+            status["models"]["tts"] = f"error: {str(e)[:50]}"
+        
+        return jsonify(status), 200
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
 
 
 # ── Auth ──────────────────────────────────────────────────────────────────────
@@ -487,14 +525,28 @@ def api_translate_audio():
     filepath = os.path.join(UPLOAD_DIR, filename)
     file.save(filepath)
     try:
+        print(f"[API] Loading ML modules for audio translation...")
         transcribe_audio, _ = get_transcriber()
+        print(f"[API] Transcriber loaded")
         translate, _ = get_translator()
+        print(f"[API] Translator loaded")
         synthesize = get_tts()
+        print(f"[API] TTS loaded")
+        
+        print(f"[API] Transcribing audio: {filepath}")
         tr   = transcribe_audio(filepath, src_lang if src_lang != "auto" else None)
         orig = tr["text"]
         det  = tr["language"]
+        print(f"[API] Transcribed: {orig[:80]}")
+        
+        print(f"[API] Translating from {det} to {tgt_lang}")
         tran = translate(orig, det, tgt_lang)
+        print(f"[API] Translated: {tran[:80]}")
+        
+        print(f"[API] Generating TTS")
         tts  = synthesize(tran, tgt_lang, OUTPUT_DIR)
+        print(f"[API] TTS generated: {tts}")
+        
         _save_hist(get_jwt_identity(), get_jwt().get("email", ""), {
             "type": "audio", "original": orig, "translated": tran,
             "src_lang": det, "tgt_lang": tgt_lang,
