@@ -3,8 +3,8 @@
   "buildCommand": "npm run build",
   "installCommand": "npm install",
   "rewrites": [
-    { "source": "/api/(.*)", "destination": "https://translatify-deploy.onrender.com/api/$1" },
-    { "source": "/outputs/(.*)", "destination": "https://translatify-deploy.onrender.com/outputs/$1" },
-    { "source": "/(.*)", "destination": "/index.html" }
+    { "source": "/api/:path*", "destination": "https://translatify-deploy.onrender.com/api/:path*" },
+    { "source": "/outputs/:path*", "destination": "https://translatify-deploy.onrender.com/outputs/:path*" },
+    { "source": "/:path*", "destination": "/index.html" }
   ]
 }
