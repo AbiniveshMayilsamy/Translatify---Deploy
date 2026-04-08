@@ -12,6 +12,6 @@ RUN python -c "from faster_whisper import WhisperModel; WhisperModel('base', dev
 
 COPY . .
 
-EXPOSE 5000
+EXPOSE 8080
 
-CMD ["gunicorn", "-w", "1", "-k", "eventlet", "--bind", "0.0.0.0:5000", "--timeout", "120", "app:app"]
+CMD gunicorn -w 1 -k eventlet --bind 0.0.0.0:${PORT:-8080} --timeout 120 app:app
