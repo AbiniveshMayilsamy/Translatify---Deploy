@@ -453,7 +453,8 @@ def user_history():
 # ── Languages ─────────────────────────────────────────────────────────────────
 @app.route("/api/languages", methods=["GET"])
 def get_languages():
-    return jsonify(get_supported_languages())
+    from ml.translator import SUPPORTED_LANGUAGES
+    return jsonify(SUPPORTED_LANGUAGES)
 
 
 # ── Transcribe ────────────────────────────────────────────────────────────────
