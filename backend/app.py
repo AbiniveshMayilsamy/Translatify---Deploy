@@ -197,25 +197,7 @@ app.config["MAX_CONTENT_LENGTH"]      = 500 * 1024 * 1024
 app.config["SEND_FILE_MAX_AGE_DEFAULT"] = 300
 app.config["JSON_SORT_KEYS"] = False
 
-# CORS - Use manual headers to avoid conflicts
-@app.before_request
-def handle_preflight():
-    if request.method == "OPTIONS":
-        response = app.make_default_options_response()
-        response.headers["Access-Control-Allow-Origin"] = "*"
-        response.headers["Access-Control-Allow-Headers"] = "Content-Type,Authorization"
-        response.headers["Access-Control-Allow-Methods"] = "GET,PUT,POST,DELETE,OPTIONS"
-        return response
-
-@app.after_request
-def after_request(response):
-    # Use assignment (=) not add() to REPLACE headers, not append them
-    response.headers["Access-Control-Allow-Origin"] = "*"
-    response.headers["Access-Control-Allow-Headers"] = "Content-Type,Authorization"
-    response.headers["Access-Control-Allow-Methods"] = "GET,PUT,POST,DELETE,OPTIONS"
-    response.headers["Access-Control-Expose-Headers"] = "Content-Type,Authorization"
-    return response
-
+CORS(app, resources={r"/*": {"origins": "*", "allow_headers": ["Content-Type", "Authorization"], "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"]}})
 jwt_manager = JWTManager(app)
 
 try:
